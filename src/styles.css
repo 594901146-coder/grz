@@ -60,7 +60,14 @@ button { font: inherit; }
 
 .hero { position: relative; min-height: 100svh; overflow: hidden; border-bottom: 1px solid var(--border); }
 .hero::before { content: ""; position: absolute; inset: 0; z-index: 2; background: linear-gradient(180deg, #080a16 0%, #111b35 24%, #25395d 42%, rgba(73,77,126,.48) 52%, rgba(66,53,112,.16) 59%, transparent 68%); pointer-events: none; }
-.hero-scene-layer { position: absolute; inset: 0; z-index: 0; transform-origin: center bottom; }
+.hero-scene-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  background: #151824;
+  transform-origin: center bottom;
+}
 .hero-statement { position: absolute; top: 26.5%; left: 50%; z-index: 4; width: min(88vw, 1160px); transform: translate(-50%, -50%); text-align: center; pointer-events: none; }
 .hero-statement__text { width: 100%; color: #d9d5e4; font: 800 clamp(44px, 8.1vw, 136px)/.9 var(--display); letter-spacing: -.045em; overflow-wrap: anywhere; text-shadow: 0 0 34px rgba(196,181,253,.08); }
 .hero-layout { position: relative; z-index: 4; min-height: 100svh; display: grid; grid-template-columns: repeat(12, 1fr); grid-template-rows: 18vh 1fr auto 9vh; padding: 0 4vw; pointer-events: none; }
