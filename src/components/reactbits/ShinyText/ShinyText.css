@@ -25,3 +25,22 @@
 .shiny-text.disabled {
   animation: none;
 }
+
+.shiny-text--segmented {
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: center;
+  background: none;
+  animation: none;
+  -webkit-background-clip: initial;
+  background-clip: initial;
+  -webkit-text-fill-color: initial;
+}
+
+.shiny-text__segment {
+  display: inline-block;
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}

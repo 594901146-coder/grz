@@ -2,8 +2,14 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, useMotionValue, useAnimationFrame, useTransform } from 'motion/react';
 import './ShinyText.css';
 
-interface ShinyTextProps {
+export type ShinyTextSegment = {
   text: string;
+  className?: string;
+};
+
+interface ShinyTextProps {
+  text?: string;
+  segments?: ShinyTextSegment[];
   disabled?: boolean;
   speed?: number;
   className?: string;
@@ -17,7 +23,8 @@ interface ShinyTextProps {
 }
 
 const ShinyText: React.FC<ShinyTextProps> = ({
-  text,
+  text = '',
+  segments,
   disabled = false,
   speed = 2,
   className = '',
@@ -117,14 +124,26 @@ const ShinyText: React.FC<ShinyTextProps> = ({
     WebkitTextFillColor: 'transparent'
   };
 
+  const hasSegments = Boolean(segments?.length);
+
   return (
     <motion.span
-      className={`shiny-text${disabled ? ' disabled' : ''} ${className}`}
-      style={{ ...gradientStyle, backgroundPosition }}
+      className={`shiny-text${hasSegments ? ' shiny-text--segmented' : ''}${disabled ? ' disabled' : ''} ${className}`}
+      style={hasSegments ? undefined : { ...gradientStyle, backgroundPosition }}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      {text}
+      {hasSegments
+        ? segments?.map((segment, index) => (
+            <motion.span
+              className={`shiny-text__segment${segment.className ? ` ${segment.className}` : ''}`}
+              key={`${segment.text}-${index}`}
+              style={{ ...gradientStyle, backgroundPosition }}
+            >
+              {segment.text}
+            </motion.span>
+          ))
+        : text}
     </motion.span>
   );
 };

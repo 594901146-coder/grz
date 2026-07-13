@@ -5,8 +5,6 @@ type ProjectArtworkProps = {
   compact?: boolean
 }
 
-const automationSteps = ['采集', '路由', '规划', '审查', '发送', '回传']
-
 export function ProjectArtwork({ project, compact = false }: ProjectArtworkProps) {
   const isAgentTeam = project.slug === 'agent-team'
   const isAgentWorkflow = project.slug === 'agent-workflow-system'
@@ -24,17 +22,12 @@ export function ProjectArtwork({ project, compact = false }: ProjectArtworkProps
       <div
         className={`project-art project-art--workflow${compact ? ' project-art--compact' : ''}`}
         role="img"
-        aria-label="Agent 自动化流程：消息采集、任务路由、目标规划、安全审查、受控发送与结果回传"
+        aria-label="Agent 自动化：本地 Gateway 连接消息接入、Agent 决策与受控执行"
       >
         <span className="workflow-art__label">AGENT AUTOMATION / 02</span>
         <div className="workflow-art__core">LOCAL<br />GATEWAY</div>
-        <ol className="workflow-art__steps">
-          {automationSteps.map((step, index) => (
-            <li key={step}><span>{String(index + 1).padStart(2, '0')}</span>{step}</li>
-          ))}
-        </ol>
         <div className="workflow-art__footer">
-          <span>浏览器扩展</span><i /><span>Goal 运行时</span><i /><span>人工审核</span>
+          <span>接入</span><i /><span>决策</span><i /><span>执行</span>
         </div>
       </div>
     )

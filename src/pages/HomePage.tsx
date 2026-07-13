@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useGSAP } from '@gsap/react'
 import gsap from 'gsap'
@@ -10,11 +10,9 @@ import SpotlightCard from '../components/reactbits/SpotlightCard/SpotlightCard'
 import { CopyEmail } from '../components/CopyEmail'
 import { ProjectArtwork } from '../components/ProjectArtwork'
 import { projects } from '../data/projects'
-import type { HeroSceneHandle } from '../components/HeroScene/HeroScene'
+import HeroScene, { type HeroSceneHandle } from '../components/HeroScene/HeroScene'
 
 gsap.registerPlugin(ScrollTrigger)
-
-const HeroScene = lazy(() => import('../components/HeroScene/HeroScene'))
 
 export function HomePage() {
   const page = useRef<HTMLElement>(null)
@@ -92,18 +90,21 @@ export function HomePage() {
     <main ref={page}>
       <section className="hero" aria-labelledby="hero-title">
         <div className="hero-scene-layer" data-hero-scene aria-hidden="true">
-          <Suspense fallback={null}>
-            <HeroScene
-              ref={heroScene}
-              accentColor="#c4b5fd"
-              quality="auto"
-              reducedMotion={reducedMotion}
-            />
-          </Suspense>
+          <HeroScene
+            ref={heroScene}
+            accentColor="#c4b5fd"
+            quality="auto"
+            reducedMotion={reducedMotion}
+          />
         </div>
         <div className="hero-statement" aria-hidden="true">
           <ShinyText
             text="Zero Doubt, Just"
+            segments={[
+              { text: 'Zero', className: 'hero-statement__word hero-statement__word--back' },
+              { text: 'Doubt,', className: 'hero-statement__word hero-statement__word--front' },
+              { text: 'Just', className: 'hero-statement__word hero-statement__word--middle' },
+            ]}
             className="hero-statement__text"
             color="#d9d5e4"
             shineColor="#ffffff"
@@ -122,7 +123,7 @@ export function HomePage() {
               <span className="hero-headline__mask"><span data-hero-line>Agent Workflow</span></span>
             </h1>
             <BlurText
-              text="工具调用 · 知识库 · 可控执行"
+              text="Harness · Graph RAG · 可控执行"
               delay={70}
               stepDuration={0.28}
               direction="bottom"
@@ -180,8 +181,8 @@ export function HomePage() {
         </div>
         <div className="capabilities" data-reveal>
           <div><span>01</span><p>Agent Workflow 设计</p></div>
-          <div><span>02</span><p>Harness Engineering</p></div>
-          <div><span>03</span><p>RAG 知识库</p></div>
+          <div><span>02</span><p>Harness</p></div>
+          <div><span>03</span><p>Graph RAG</p></div>
           <div><span>04</span><p>执行可靠性与风险控制</p></div>
         </div>
       </section>
