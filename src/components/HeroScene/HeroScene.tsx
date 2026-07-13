@@ -83,7 +83,7 @@ const HeroScene = forwardRef<HeroSceneHandle, HeroSceneProps>(function HeroScene
     }, window.location.origin)
   }, [frameLoaded, paused])
 
-  const ready = frameLoaded && supported !== false
+  const ready = frameLoaded && supported === true
   const classes = [
     'hero-scene',
     ready ? 'hero-scene--ready' : 'hero-scene--fallback',

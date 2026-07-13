@@ -80,9 +80,10 @@
         return;
     }
 
-    var workerSupported = typeof Worker !== 'undefined'
-        && typeof OffscreenCanvas !== 'undefined'
-        && typeof canvas.transferControlToOffscreen === 'function';
+    // Some mobile browsers expose OffscreenCanvas but cannot create the
+    // required WebGL context inside a worker. Keep rendering on the main
+    // thread so those browsers do not get stuck with a transferred canvas.
+    var workerSupported = false;
 
     if (workerSupported) {
         document.documentElement.dataset.oceanRenderer = 'worker';
