@@ -14,3 +14,12 @@ body {
     width: 100%;
     height: 100%;
 }
+
+#error {
+    position: absolute;
+    inset: 0;
+    display: none;
+    place-items: center;
+    color: #f5f2fa;
+    font: 14px/1.4 sans-serif;
+}

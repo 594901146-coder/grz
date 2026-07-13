@@ -2,6 +2,7 @@
     'use strict';
 
     var canvas = document.getElementById('simulator'),
+        error = document.getElementById('error'),
         worker = null,
         renderer = null,
         resizeFrame = null,
@@ -13,6 +14,9 @@
 
     var postStatus = function (supported) {
         document.documentElement.dataset.oceanSupported = String(supported);
+        if (!supported) {
+            error.style.display = 'block';
+        }
         window.parent.postMessage({
             source: 'david-li-ocean',
             type: 'status',
@@ -71,8 +75,10 @@
         postStatus(false);
     });
 
-    RESOLUTION = width <= 899 ? 256 : 512;
-    document.documentElement.dataset.oceanResolution = String(RESOLUTION);
+    if (!hasWebGLSupportWithExtensions(['OES_texture_float', 'OES_texture_float_linear'])) {
+        postStatus(false);
+        return;
+    }
 
     // Some mobile browsers expose OffscreenCanvas but cannot create the
     // required WebGL context inside a worker. Keep rendering on the main
@@ -105,9 +111,9 @@
             renderer = new OceanRenderer(canvas, width, height, {
                 request: window.requestAnimationFrame.bind(window),
                 cancel: window.cancelAnimationFrame.bind(window)
-            }, postStatus);
-            renderer.renderOnce();
+            });
             renderer.setPaused(paused);
+            postStatus(true);
         } catch (renderError) {
             postStatus(false);
         }

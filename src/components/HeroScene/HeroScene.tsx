@@ -12,6 +12,20 @@ type HeroSceneProps = {
   className?: string
 }
 
+type OceanStatusMessage = {
+  source: 'david-li-ocean'
+  type: 'status'
+  supported: boolean
+}
+
+function isOceanStatusMessage(value: unknown): value is OceanStatusMessage {
+  if (!value || typeof value !== 'object') return false
+  const message = value as Partial<OceanStatusMessage>
+  return message.source === 'david-li-ocean'
+    && message.type === 'status'
+    && typeof message.supported === 'boolean'
+}
+
 const HeroScene = forwardRef<HeroSceneHandle, HeroSceneProps>(function HeroScene({
   accentColor = '#c4b5fd',
   quality = 'auto',
@@ -21,6 +35,7 @@ const HeroScene = forwardRef<HeroSceneHandle, HeroSceneProps>(function HeroScene
   const containerRef = useRef<HTMLDivElement>(null)
   const frameRef = useRef<HTMLIFrameElement>(null)
   const [frameLoaded, setFrameLoaded] = useState(false)
+  const [supported, setSupported] = useState<boolean | null>(null)
   const [inViewport, setInViewport] = useState(true)
   const [documentVisible, setDocumentVisible] = useState(!document.hidden)
   const paused = reducedMotion || !inViewport || !documentVisible
@@ -49,6 +64,17 @@ const HeroScene = forwardRef<HeroSceneHandle, HeroSceneProps>(function HeroScene
   }, [])
 
   useEffect(() => {
+    const handleMessage = (event: MessageEvent<unknown>) => {
+      if (event.origin !== window.location.origin || event.source !== frameRef.current?.contentWindow) return
+      if (!isOceanStatusMessage(event.data)) return
+      setSupported(event.data.supported)
+    }
+
+    window.addEventListener('message', handleMessage)
+    return () => window.removeEventListener('message', handleMessage)
+  }, [])
+
+  useEffect(() => {
     if (!frameLoaded) return
     frameRef.current?.contentWindow?.postMessage({
       source: 'zd-ocean-host',
@@ -57,9 +83,10 @@ const HeroScene = forwardRef<HeroSceneHandle, HeroSceneProps>(function HeroScene
     }, window.location.origin)
   }, [frameLoaded, paused])
 
+  const ready = frameLoaded && supported === true
   const classes = [
     'hero-scene',
-    frameLoaded && 'hero-scene--loaded',
+    ready ? 'hero-scene--ready' : 'hero-scene--fallback',
     className,
   ].filter(Boolean).join(' ')
 
@@ -71,12 +98,14 @@ const HeroScene = forwardRef<HeroSceneHandle, HeroSceneProps>(function HeroScene
       data-quality={quality}
       aria-hidden="true"
     >
+      <div className="hero-scene__fallback" />
       <iframe
         ref={frameRef}
         className="hero-scene__frame"
         src="/ocean/index.html"
         title="Ocean wave simulation"
         tabIndex={-1}
+        sandbox="allow-scripts allow-same-origin"
         onLoad={() => setFrameLoaded(true)}
       />
     </div>

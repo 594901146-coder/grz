@@ -1,4 +1,4 @@
-var OceanRenderer = function (canvas, initialWidth, initialHeight, scheduler, onStatus) {
+var OceanRenderer = function (canvas, initialWidth, initialHeight, scheduler) {
     var camera = new Camera(),
         projectionMatrix = new Float32Array(16),
         width = Math.max(1, Math.round(initialWidth)),
@@ -6,8 +6,7 @@ var OceanRenderer = function (canvas, initialWidth, initialHeight, scheduler, on
         simulator = new Simulator(canvas, width, height),
         paused = true,
         frameHandle = null,
-        lastTime = null,
-        firstFrameRendered = false;
+        lastTime = null;
 
     makePerspectiveMatrix(projectionMatrix, FOV, width / height, NEAR, FAR);
 
@@ -17,36 +16,16 @@ var OceanRenderer = function (canvas, initialWidth, initialHeight, scheduler, on
         }
     };
 
-    var renderFrame = function (currentTime) {
-        var deltaTime = lastTime === null ? 0.0 : (currentTime - lastTime) / 1000;
-        lastTime = currentTime;
-        try {
-            simulator.render(deltaTime, projectionMatrix, camera.getViewMatrix(), camera.getPosition());
-            if (!firstFrameRendered) {
-                firstFrameRendered = true;
-                if (onStatus) {
-                    onStatus(true);
-                }
-            }
-        } catch (renderError) {
-            paused = true;
-            if (onStatus) {
-                onStatus(false);
-            }
-            return false;
-        }
-        return true;
-    };
-
     var render = function (currentTime) {
         frameHandle = null;
         if (paused) {
             return;
         }
 
-        if (renderFrame(currentTime)) {
-            scheduleFrame();
-        }
+        var deltaTime = lastTime === null ? 0.0 : (currentTime - lastTime) / 1000;
+        lastTime = currentTime;
+        simulator.render(deltaTime, projectionMatrix, camera.getViewMatrix(), camera.getPosition());
+        scheduleFrame();
     };
 
     this.resize = function (nextWidth, nextHeight) {
@@ -61,11 +40,6 @@ var OceanRenderer = function (canvas, initialWidth, initialHeight, scheduler, on
         makePerspectiveMatrix(projectionMatrix, FOV, width / height, NEAR, FAR);
         simulator.resize(width, height);
         return true;
-    };
-
-    this.renderOnce = function () {
-        lastTime = null;
-        return renderFrame(0);
     };
 
     this.setPaused = function (nextPaused) {
