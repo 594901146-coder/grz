@@ -18,6 +18,21 @@ var Camera = function () {
         changed = true;
     };
 
+    this.setParallax = function (x, y) {
+        x = clamp(Number.isFinite(x) ? x : 0, -1, 1);
+        y = clamp(Number.isFinite(y) ? y : 0, -1, 1);
+
+        var nextAzimuth = INITIAL_AZIMUTH + x * PARALLAX_AZIMUTH_RANGE,
+            nextElevation = INITIAL_ELEVATION + y * PARALLAX_ELEVATION_RANGE;
+        if (nextAzimuth === azimuth && nextElevation === elevation) {
+            return;
+        }
+
+        azimuth = nextAzimuth;
+        elevation = nextElevation;
+        changed = true;
+    };
+
     this.getPosition = function () {
         return position;
     };
@@ -376,13 +391,16 @@ var Simulator = function (canvas, width, height) {
 
     var contextAttributes = {
         alpha: false,
-        antialias: true,
+        antialias: width > 899,
         depth: true,
-        powerPreference: 'high-performance',
+        powerPreference: width > 899 ? 'high-performance' : 'default',
         preserveDrawingBuffer: false,
         stencil: false
     };
-    var gl = canvas.getContext('webgl', contextAttributes) || canvas.getContext('experimental-webgl', contextAttributes);
+    var gl = canvas.getContext('webgl', contextAttributes)
+        || canvas.getContext('experimental-webgl', contextAttributes)
+        || canvas.getContext('webgl')
+        || canvas.getContext('experimental-webgl');
     if (gl === null) {
         throw new Error('WebGL is unavailable.');
     }
@@ -394,8 +412,13 @@ var Simulator = function (canvas, width, height) {
 
     var changed = true;
 
-    gl.getExtension('OES_texture_float');
-    gl.getExtension('OES_texture_float_linear');
+    if (gl.getExtension('OES_texture_float') === null) {
+        throw new Error('Floating-point WebGL textures are unavailable.');
+    }
+    var floatLinearFilter = gl.getExtension('OES_texture_float_linear') === null ? gl.NEAREST : gl.LINEAR;
+    if (typeof document !== 'undefined') {
+        document.documentElement.dataset.oceanFloatFilter = floatLinearFilter === gl.LINEAR ? 'linear' : 'nearest';
+    }
 
     gl.clearColor.apply(gl, CLEAR_COLOR);
     gl.enable(gl.DEPTH_TEST);
@@ -524,8 +547,8 @@ var Simulator = function (canvas, width, height) {
     var initialSpectrumTexture = buildTexture(gl, INITIAL_SPECTRUM_UNIT, gl.RGBA, gl.FLOAT, RESOLUTION, RESOLUTION, null, gl.REPEAT, gl.REPEAT, gl.NEAREST, gl.NEAREST),
         pongPhaseTexture = buildTexture(gl, PONG_PHASE_UNIT, gl.RGBA, gl.FLOAT, RESOLUTION, RESOLUTION, null, gl.CLAMP_TO_EDGE, gl.CLAMP_TO_EDGE, gl.NEAREST, gl.NEAREST),
         spectrumTexture = buildTexture(gl, SPECTRUM_UNIT, gl.RGBA, gl.FLOAT, RESOLUTION, RESOLUTION, null, gl.CLAMP_TO_EDGE, gl.CLAMP_TO_EDGE, gl.NEAREST, gl.NEAREST),
-        displacementMap = buildTexture(gl, DISPLACEMENT_MAP_UNIT, gl.RGBA, gl.FLOAT, RESOLUTION, RESOLUTION, null, gl.REPEAT, gl.REPEAT, gl.LINEAR, gl.LINEAR),
-        normalMap = buildTexture(gl, NORMAL_MAP_UNIT, gl.RGBA, gl.FLOAT, RESOLUTION, RESOLUTION, null, gl.REPEAT, gl.REPEAT, gl.LINEAR, gl.LINEAR),
+        displacementMap = buildTexture(gl, DISPLACEMENT_MAP_UNIT, gl.RGBA, gl.FLOAT, RESOLUTION, RESOLUTION, null, gl.REPEAT, gl.REPEAT, floatLinearFilter, floatLinearFilter),
+        normalMap = buildTexture(gl, NORMAL_MAP_UNIT, gl.RGBA, gl.FLOAT, RESOLUTION, RESOLUTION, null, gl.REPEAT, gl.REPEAT, floatLinearFilter, floatLinearFilter),
         pingTransformTexture = buildTexture(gl, PING_TRANSFORM_UNIT, gl.RGBA, gl.FLOAT, RESOLUTION, RESOLUTION, null, gl.CLAMP_TO_EDGE, gl.CLAMP_TO_EDGE, gl.NEAREST, gl.NEAREST),
         pongTransformTexture = buildTexture(gl, PONG_TRANSFORM_UNIT, gl.RGBA, gl.FLOAT, RESOLUTION, RESOLUTION, null, gl.CLAMP_TO_EDGE, gl.CLAMP_TO_EDGE, gl.NEAREST, gl.NEAREST);
 
@@ -551,6 +574,17 @@ var Simulator = function (canvas, width, height) {
         normalMapFramebuffer = buildFramebuffer(gl, normalMap),
         pingTransformFramebuffer = buildFramebuffer(gl, pingTransformTexture),
         pongTransformFramebuffer = buildFramebuffer(gl, pongTransformTexture);
+
+    var beginTextureRender = function (framebuffer, textureUnit) {
+        gl.activeTexture(gl.TEXTURE0 + textureUnit);
+        gl.bindTexture(gl.TEXTURE_2D, null);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+    };
+
+    var finishTextureRender = function (texture, textureUnit) {
+        gl.activeTexture(gl.TEXTURE0 + textureUnit);
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+    };
 
     this.setWind = function (x, y) {
         windX = x;
@@ -580,28 +614,34 @@ var Simulator = function (canvas, width, height) {
         gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
 
         if (changed) {
-            gl.bindFramebuffer(gl.FRAMEBUFFER, initialSpectrumFramebuffer);
+            beginTextureRender(initialSpectrumFramebuffer, INITIAL_SPECTRUM_UNIT);
             gl.useProgram(initialSpectrumProgram.program);
             gl.uniform2f(initialSpectrumProgram.uniformLocations['u_wind'], windX, windY);
             gl.uniform1f(initialSpectrumProgram.uniformLocations['u_size'], size);
             gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+            finishTextureRender(initialSpectrumTexture, INITIAL_SPECTRUM_UNIT);
         }
         
         //store phases separately to ensure continuity of waves during parameter editing
+        var phaseOutputFramebuffer = pingPhase ? pongPhaseFramebuffer : pingPhaseFramebuffer,
+            phaseOutputTexture = pingPhase ? pongPhaseTexture : pingPhaseTexture,
+            phaseOutputUnit = pingPhase ? PONG_PHASE_UNIT : PING_PHASE_UNIT;
+        beginTextureRender(phaseOutputFramebuffer, phaseOutputUnit);
         gl.useProgram(phaseProgram.program);
-        gl.bindFramebuffer(gl.FRAMEBUFFER, pingPhase ? pongPhaseFramebuffer : pingPhaseFramebuffer);
         gl.uniform1i(phaseProgram.uniformLocations['u_phases'], pingPhase ? PING_PHASE_UNIT : PONG_PHASE_UNIT);
         pingPhase = !pingPhase;
         gl.uniform1f(phaseProgram.uniformLocations['u_deltaTime'], deltaTime);
         gl.uniform1f(phaseProgram.uniformLocations['u_size'], size);
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+        finishTextureRender(phaseOutputTexture, phaseOutputUnit);
 
+        beginTextureRender(spectrumFramebuffer, SPECTRUM_UNIT);
         gl.useProgram(spectrumProgram.program);
-        gl.bindFramebuffer(gl.FRAMEBUFFER, spectrumFramebuffer);
         gl.uniform1i(spectrumProgram.uniformLocations['u_phases'], pingPhase ? PING_PHASE_UNIT : PONG_PHASE_UNIT);
         gl.uniform1f(spectrumProgram.uniformLocations['u_size'], size);
         gl.uniform1f(spectrumProgram.uniformLocations['u_choppiness'], choppiness);
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+        finishTextureRender(spectrumTexture, SPECTRUM_UNIT);
 
         var subtransformProgram = horizontalSubtransformProgram;
         gl.useProgram(horizontalSubtransformProgram.program);
@@ -609,35 +649,51 @@ var Simulator = function (canvas, width, height) {
         //GPU FFT using Stockham formulation
         var iterations = log2(RESOLUTION) * 2;
         for (var i = 0; i < iterations; i += 1) {
-            if (i === 0) {
-                gl.bindFramebuffer(gl.FRAMEBUFFER, pingTransformFramebuffer);
-                gl.uniform1i(subtransformProgram.uniformLocations['u_input'], SPECTRUM_UNIT);
-            } else if (i === iterations - 1) {
-                gl.bindFramebuffer(gl.FRAMEBUFFER, displacementMapFramebuffer);
-                gl.uniform1i(subtransformProgram.uniformLocations['u_input'], (iterations % 2 === 0) ? PING_TRANSFORM_UNIT : PONG_TRANSFORM_UNIT);
-            } else if (i % 2 === 1) {
-                gl.bindFramebuffer(gl.FRAMEBUFFER, pongTransformFramebuffer);
-                gl.uniform1i(subtransformProgram.uniformLocations['u_input'], PING_TRANSFORM_UNIT);
-            } else {
-                gl.bindFramebuffer(gl.FRAMEBUFFER, pingTransformFramebuffer);
-                gl.uniform1i(subtransformProgram.uniformLocations['u_input'], PONG_TRANSFORM_UNIT);
-            }
-
             if (i === iterations / 2) {
                 subtransformProgram = verticalSubtransformProgram;
                 gl.useProgram(verticalSubtransformProgram.program);
             }
 
+            var transformOutputFramebuffer,
+                transformOutputTexture,
+                transformOutputUnit,
+                transformInputUnit;
+            if (i === 0) {
+                transformOutputFramebuffer = pingTransformFramebuffer;
+                transformOutputTexture = pingTransformTexture;
+                transformOutputUnit = PING_TRANSFORM_UNIT;
+                transformInputUnit = SPECTRUM_UNIT;
+            } else if (i === iterations - 1) {
+                transformOutputFramebuffer = displacementMapFramebuffer;
+                transformOutputTexture = displacementMap;
+                transformOutputUnit = DISPLACEMENT_MAP_UNIT;
+                transformInputUnit = (iterations % 2 === 0) ? PING_TRANSFORM_UNIT : PONG_TRANSFORM_UNIT;
+            } else if (i % 2 === 1) {
+                transformOutputFramebuffer = pongTransformFramebuffer;
+                transformOutputTexture = pongTransformTexture;
+                transformOutputUnit = PONG_TRANSFORM_UNIT;
+                transformInputUnit = PING_TRANSFORM_UNIT;
+            } else {
+                transformOutputFramebuffer = pingTransformFramebuffer;
+                transformOutputTexture = pingTransformTexture;
+                transformOutputUnit = PING_TRANSFORM_UNIT;
+                transformInputUnit = PONG_TRANSFORM_UNIT;
+            }
+
+            beginTextureRender(transformOutputFramebuffer, transformOutputUnit);
+            gl.uniform1i(subtransformProgram.uniformLocations['u_input'], transformInputUnit);
             gl.uniform1f(subtransformProgram.uniformLocations['u_subtransformSize'], Math.pow(2,(i % (iterations / 2)) + 1));
             gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+            finishTextureRender(transformOutputTexture, transformOutputUnit);
         }
 
-        gl.bindFramebuffer(gl.FRAMEBUFFER, normalMapFramebuffer);
+        beginTextureRender(normalMapFramebuffer, NORMAL_MAP_UNIT);
         gl.useProgram(normalMapProgram.program);
         if (changed) {
             gl.uniform1f(normalMapProgram.uniformLocations['u_size'], size);
         }
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+        finishTextureRender(normalMap, NORMAL_MAP_UNIT);
 
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
         gl.viewport(0, 0, canvas.width, canvas.height);

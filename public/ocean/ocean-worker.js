@@ -46,5 +46,7 @@ self.addEventListener('message', function (event) {
         renderer.resize(message.width, message.height);
     } else if (message.type === 'set-paused') {
         renderer.setPaused(Boolean(message.paused));
+    } else if (message.type === 'set-parallax') {
+        renderer.setParallax(message.x, message.y);
     }
 });

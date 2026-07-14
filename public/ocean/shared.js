@@ -103,6 +103,8 @@ var CAMERA_DISTANCE = 925,
     ORBIT_POINT = [0.0, 0.0, -120.0],
     INITIAL_AZIMUTH = 0.06,
     INITIAL_ELEVATION = 0.11,
+    PARALLAX_AZIMUTH_RANGE = 0.03,
+    PARALLAX_ELEVATION_RANGE = 0.018,
     MIN_AZIMUTH = -0.2,
     MAX_AZIMUTH = 0.5,
     MIN_ELEVATION = 0.4,
@@ -359,6 +361,11 @@ var buildProgramWrapper = function (gl, vertexShader, fragmentShader, attributeL
         gl.bindAttribLocation(program, attributeLocations[attributeName], attributeName);
     }
     gl.linkProgram(program);
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+        var programLog = gl.getProgramInfoLog(program) || 'Unknown WebGL program link error.';
+        gl.deleteProgram(program);
+        throw new Error(programLog);
+    }
     var uniformLocations = {};
     var numberOfUniforms = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS);
     for (var i = 0; i < numberOfUniforms; i += 1) {
@@ -374,9 +381,25 @@ var buildProgramWrapper = function (gl, vertexShader, fragmentShader, attributeL
 };
 
 var buildShader = function (gl, type, source) {
+    if (type === gl.FRAGMENT_SHADER && source.indexOf('precision highp float;') !== -1) {
+        var highFloat = gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.HIGH_FLOAT),
+            fragmentPrecision = highFloat && highFloat.precision > 0 ? 'highp' : 'mediump';
+        if (fragmentPrecision === 'mediump') {
+            source = source.replace('precision highp float;', 'precision mediump float;');
+        }
+        if (typeof document !== 'undefined') {
+            document.documentElement.dataset.oceanFragmentPrecision = fragmentPrecision;
+        }
+    }
+
     var shader = gl.createShader(type);
     gl.shaderSource(shader, source);
     gl.compileShader(shader);
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        var shaderLog = gl.getShaderInfoLog(shader) || 'Unknown WebGL shader compile error.';
+        gl.deleteShader(shader);
+        throw new Error(shaderLog);
+    }
     return shader;
 };
 
@@ -396,6 +419,10 @@ var buildFramebuffer = function (gl, attachment) {
     var framebuffer = gl.createFramebuffer();
     gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, attachment, 0);
+    if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) {
+        gl.deleteFramebuffer(framebuffer);
+        throw new Error('WebGL framebuffer is incomplete.');
+    }
     return framebuffer;
 };
 

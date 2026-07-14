@@ -14,6 +14,21 @@ import HeroScene, { type HeroSceneHandle } from '../components/HeroScene/HeroSce
 
 gsap.registerPlugin(ScrollTrigger)
 
+const heroStars = [
+  { left: '6%', top: '22%', size: 1, duration: 5.4, delay: 1.1 },
+  { left: '18%', top: '68%', size: 1.5, duration: 4.8, delay: 2.6 },
+  { left: '31%', top: '14%', size: 1, duration: 6.2, delay: 3.4 },
+  { left: '44%', top: '72%', size: 2, duration: 5.7, delay: 0.8 },
+  { left: '57%', top: '34%', size: 1, duration: 4.6, delay: 1.9 },
+  { left: '70%', top: '10%', size: 1.5, duration: 6.5, delay: 4.1 },
+  { left: '83%', top: '64%', size: 1, duration: 5.2, delay: 2.2 },
+  { left: '94%', top: '28%', size: 2, duration: 6, delay: 5 },
+  { left: '12%', top: '45%', size: 1, duration: 4.9, delay: 3.1 },
+  { left: '38%', top: '50%', size: 1.5, duration: 5.8, delay: 1.3 },
+  { left: '65%', top: '58%', size: 1, duration: 6.4, delay: 4.6 },
+  { left: '88%', top: '76%', size: 2, duration: 5.5, delay: 2.8 },
+] as const
+
 export function HomePage() {
   const page = useRef<HTMLElement>(null)
   const heroScene = useRef<HeroSceneHandle>(null)
@@ -96,6 +111,23 @@ export function HomePage() {
             quality="auto"
             reducedMotion={reducedMotion}
           />
+        </div>
+        <div className="hero-stars" aria-hidden="true">
+          {heroStars.map((star, index) => (
+            <i
+              className={star.size === 2 ? 'hero-star hero-star--large' : 'hero-star'}
+              key={`${star.left}-${star.top}`}
+              style={{
+                left: star.left,
+                top: star.top,
+                width: star.size,
+                height: star.size,
+                animationDuration: `${star.duration}s`,
+                animationDelay: `-${star.delay}s`,
+              }}
+              data-star-index={index + 1}
+            />
+          ))}
         </div>
         <div className="hero-statement" aria-hidden="true">
           <ShinyText

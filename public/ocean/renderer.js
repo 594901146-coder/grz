@@ -1,4 +1,4 @@
-var OceanRenderer = function (canvas, initialWidth, initialHeight, scheduler) {
+var OceanRenderer = function (canvas, initialWidth, initialHeight, scheduler, onStatus) {
     var camera = new Camera(),
         projectionMatrix = new Float32Array(16),
         width = Math.max(1, Math.round(initialWidth)),
@@ -6,7 +6,14 @@ var OceanRenderer = function (canvas, initialWidth, initialHeight, scheduler) {
         simulator = new Simulator(canvas, width, height),
         paused = true,
         frameHandle = null,
-        lastTime = null;
+        lastTime = null,
+        firstFrameRendered = false,
+        targetParallaxX = 0,
+        targetParallaxY = 0,
+        currentParallaxX = 0,
+        currentParallaxY = 0;
+
+    var PARALLAX_RESPONSE = 12;
 
     makePerspectiveMatrix(projectionMatrix, FOV, width / height, NEAR, FAR);
 
@@ -16,16 +23,40 @@ var OceanRenderer = function (canvas, initialWidth, initialHeight, scheduler) {
         }
     };
 
+    var renderFrame = function (currentTime) {
+        var deltaTime = lastTime === null ? 0.0 : (currentTime - lastTime) / 1000;
+        lastTime = currentTime;
+        try {
+            var parallaxBlend = 1 - Math.exp(-PARALLAX_RESPONSE * Math.min(deltaTime, 0.1));
+            currentParallaxX += (targetParallaxX - currentParallaxX) * parallaxBlend;
+            currentParallaxY += (targetParallaxY - currentParallaxY) * parallaxBlend;
+            camera.setParallax(currentParallaxX, currentParallaxY);
+            simulator.render(deltaTime, projectionMatrix, camera.getViewMatrix(), camera.getPosition());
+            if (!firstFrameRendered) {
+                firstFrameRendered = true;
+                if (onStatus) {
+                    onStatus(true);
+                }
+            }
+        } catch (renderError) {
+            paused = true;
+            if (onStatus) {
+                onStatus(false);
+            }
+            return false;
+        }
+        return true;
+    };
+
     var render = function (currentTime) {
         frameHandle = null;
         if (paused) {
             return;
         }
 
-        var deltaTime = lastTime === null ? 0.0 : (currentTime - lastTime) / 1000;
-        lastTime = currentTime;
-        simulator.render(deltaTime, projectionMatrix, camera.getViewMatrix(), camera.getPosition());
-        scheduleFrame();
+        if (renderFrame(currentTime)) {
+            scheduleFrame();
+        }
     };
 
     this.resize = function (nextWidth, nextHeight) {
@@ -40,6 +71,22 @@ var OceanRenderer = function (canvas, initialWidth, initialHeight, scheduler) {
         makePerspectiveMatrix(projectionMatrix, FOV, width / height, NEAR, FAR);
         simulator.resize(width, height);
         return true;
+    };
+
+    this.renderOnce = function () {
+        lastTime = null;
+        return renderFrame(0);
+    };
+
+    this.setParallax = function (x, y) {
+        targetParallaxX = clamp(Number.isFinite(x) ? x : 0, -1, 1);
+        targetParallaxY = clamp(Number.isFinite(y) ? y : 0, -1, 1);
+        if (paused) {
+            currentParallaxX = targetParallaxX;
+            currentParallaxY = targetParallaxY;
+            camera.setParallax(currentParallaxX, currentParallaxY);
+            this.renderOnce();
+        }
     };
 
     this.setPaused = function (nextPaused) {
