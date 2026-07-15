@@ -108,7 +108,7 @@ export function HomePage() {
           <HeroScene
             ref={heroScene}
             accentColor="#c4b5fd"
-            quality="auto"
+            quality="high"
             reducedMotion={reducedMotion}
           />
         </div>

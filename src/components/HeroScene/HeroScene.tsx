@@ -215,6 +215,7 @@ const HeroScene = forwardRef<HeroSceneHandle, HeroSceneProps>(function HeroScene
     frameLoaded && 'hero-scene--loaded',
     className,
   ].filter(Boolean).join(' ')
+  const frameSrc = `/ocean/index.html?quality=${quality}`
 
   return (
     <div
@@ -227,7 +228,7 @@ const HeroScene = forwardRef<HeroSceneHandle, HeroSceneProps>(function HeroScene
       <iframe
         ref={frameRef}
         className="hero-scene__frame"
-        src="/ocean/index.html"
+        src={frameSrc}
         title="Ocean wave simulation"
         tabIndex={-1}
         onLoad={() => setFrameLoaded(true)}

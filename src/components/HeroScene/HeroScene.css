@@ -7,8 +7,7 @@
 
 .hero-scene__frame {
   position: absolute;
-  left: 50%;
-  top: 50%;
+  inset: 0;
   z-index: 1;
   display: block;
   width: 100%;
@@ -17,7 +16,7 @@
   background: transparent;
   opacity: 0;
   pointer-events: none;
-  transform: translate(-50%, -50%);
+  transform: none;
   transition: opacity 240ms ease;
 }
 
