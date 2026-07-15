@@ -19,6 +19,7 @@ export type Project = {
   outcome: string
   metrics?: ProjectMetric[]
   detailKind?: 'agent-team' | 'agent-workflow'
+  hideChallenge?: boolean
   isPlaceholder?: boolean
   repository?: string
   demo?: string
@@ -60,6 +61,21 @@ export const projects: Project[] = [
     solution: '由浏览器扩展接入页面消息，本地 Gateway 完成去重、会话聚合与审查；Goal 运行时负责规划和工具调用，并把低风险动作交回扩展执行，高风险内容留给人工确认。',
     outcome: '已形成从页面消息采集、知识辅助草稿、安全审查到受控发送和结果回传的完整链路，并以测试覆盖消息规范化、风险拦截、Goal 循环和发送动作。',
     detailKind: 'agent-workflow',
+  },
+  {
+    slug: 'meow',
+    number: '03',
+    title: 'Meow',
+    eyebrow: '终端 AI · Coding Agent',
+    summary: '基于开源项目，以最少新增代码构建的个人终端 Coding Agent；复用模型适配、Agent Runtime 与终端交互能力，快速形成可持续使用、可扩展的开发工具。',
+    role: '开源项目改造 / TypeScript 开发',
+    stack: ['TypeScript', 'Node.js', 'Bun', 'Terminal TUI', 'Vitest', 'Biome'],
+    cover: 'Meow 终端 Coding Agent 界面',
+    tone: 'plum',
+    challenge: '希望在终端中获得一个可按个人工作流调整的编程助手，同时避免从零重复搭建模型适配、工具调用和会话管理等 Agent 基础设施。',
+    hideChallenge: true,
+    solution: '复用开源项目已有的模型适配、Agent Runtime、终端交互和扩展机制，在明确边界上补充个人化命令入口、启动与发布脚本，以及最小持续对话 Agent 示例。',
+    outcome: '形成一个可在日常开发中使用的终端 Agent，支持多模型、多种运行模式、会话管理、扩展与 SDK 接入，并保持现有配置和第三方扩展的兼容性。',
   },
 ]
 

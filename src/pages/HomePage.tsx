@@ -172,7 +172,7 @@ export function HomePage() {
         <header className="section-heading" data-reveal>
           <p>PERSONAL PROJECTS / {String(projects.length).padStart(2, '0')}</p>
           <h2 id="work-title">个人项目</h2>
-          <span>两个真实项目，呈现 Agent 协作、工具执行与风险控制的工程实践。</span>
+          <span>三个真实项目，呈现 Agent 协作、工具执行、风险控制与个人开发工具的工程实践。</span>
         </header>
 
         <div className="project-list">

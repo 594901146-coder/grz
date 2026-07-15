@@ -134,6 +134,8 @@ button { font: inherit; }
 .project-art--compact { aspect-ratio: 1.72; }
 .project-art--image { aspect-ratio: 1.824; background: #080b0d; }
 .project-art--image > img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.project-art--meow { aspect-ratio: 1815 / 970; }
+.project-art--meow > img { object-fit: cover; }
 .project-art--workflow { aspect-ratio: 1.55; display: grid; grid-template-rows: auto 1fr auto; gap: 26px; padding: 7%; overflow: hidden; background: linear-gradient(145deg, #101124, #0a0b12 64%); border: 1px solid rgba(196,181,253,.2); }
 .workflow-art__label { color: #c9c1e8; font: 600 10px/1 var(--display); letter-spacing: .16em; }
 .workflow-art__core { place-self: center; display: grid; place-items: center; width: clamp(104px, 17vw, 176px); aspect-ratio: 1; border: 1px solid rgba(196,181,253,.68); border-radius: 50%; color: #f5f2fa; background: radial-gradient(circle, rgba(139,124,191,.3), rgba(18,17,34,.2) 56%, transparent 58%); font: 700 clamp(14px, 2vw, 21px)/.95 var(--display); letter-spacing: .08em; text-align: center; }

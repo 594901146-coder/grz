@@ -43,7 +43,7 @@ export function ProjectPage() {
           </div>
         </section>
 
-        {!isAgentWorkflow && <section className="document-section" aria-labelledby="challenge-title">
+        {!isAgentWorkflow && !project.hideChallenge && <section className="document-section" aria-labelledby="challenge-title">
           <div className="document-section__label document-section__label--index">02</div>
           <div className="document-section__content">
             <h2 id="challenge-title">{isAgentTeam ? '让多个专业 Agent 像一个长期协作的团队一样工作' : '需要解决什么'}</h2>
@@ -58,7 +58,7 @@ export function ProjectPage() {
         </section>}
 
         {!isAgentTeam && !isAgentWorkflow && <section className="document-section" aria-labelledby="approach-title">
-          <div className="document-section__label document-section__label--index">03</div>
+          <div className="document-section__label document-section__label--index">{project.hideChallenge ? '02' : '03'}</div>
           <div className="document-section__content">
             <h2 id="approach-title">实现方式</h2>
             <p>{project.solution}</p>
@@ -69,7 +69,7 @@ export function ProjectPage() {
         {isAgentWorkflow && <AgentAutomationOverview />}
 
         {!isAgentTeam && !isAgentWorkflow && <section className="document-section" aria-labelledby="outcome-title">
-          <div className="document-section__label document-section__label--index">08</div>
+          <div className="document-section__label document-section__label--index">{project.hideChallenge ? '03' : '08'}</div>
           <div className="document-section__content">
             <h2 id="outcome-title">项目产出</h2>
             <p>{project.outcome}</p>

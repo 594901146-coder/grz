@@ -33,6 +33,14 @@ export function ProjectArtwork({ project, compact = false }: ProjectArtworkProps
     )
   }
 
+  if (project.slug === 'meow') {
+    return (
+      <div className="project-art project-art--image project-art--meow">
+        <img src="/projects/meow-terminal.png" alt="Meow 在 Windows 终端中的运行界面" />
+      </div>
+    )
+  }
+
   return (
     <div
       className={`project-art project-art--${project.tone}${compact ? ' project-art--compact' : ''}`}
